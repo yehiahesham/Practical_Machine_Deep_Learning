@@ -12,7 +12,7 @@ class layer(object):
 
         if biase is not None:
             self.biase=biase
-        else: self.biase= np.random.randn(input_size) / np.sqrt(input_size)
+        else: self.biase= np.random.randn(numof_nodes)
 
         self.numof_nodes=numof_nodes
         self.neuronsArray=[]
@@ -22,7 +22,7 @@ class layer(object):
         # for i in range(len(self.weights)):
         for weight in self.weights:
             # neuronsArray.append(neuron(actFun,d_actFun,weights=self.weights,biase=self.biase))
-            self.neuronsArray.append(neuron(actFun,d_actFun,input_size=2,output_size=1,weights=weight))
+            self.neuronsArray.append(neuron(actFun,d_actFun))
 
 
     def forward(self,inputs):
@@ -31,19 +31,21 @@ class layer(object):
         # print 'inputs is ', inputs
         # print 'self.biase is ', self.biase
         self.outputs=[]
-        for node in self.neuronsArray:
-            self.outputs.append(node.forward(inputs))
-        # print self.outputs
-        # print self.outputs[0]
-        # print self.outputs[1]
-        # print self.outputs[2]
+        for i in range(self.numof_nodes):
+            self.outputs.append(self.neuronsArray[i].forward(inputs,self.weights[i],self.biase[i]))
         return self.outputs
 
     def backward(self,dz):
         nodes_dz=[]
-        for i in range(self.output_size):
-            for gradient in dz:
-                print gradient * self.neuronsArray[i].backward(gradient)
-            # nodes_dz.append(self.neuronsArray[i].backward(dz[i]))
+        t=0
+        # for i in range(self.output_size):
+        #     for gradient in dz:
+        #         print gradient * self.neuronsArray[i].backward(gradient)
+        #         nodes_dz.append(self.neuronsArray[i].backward(dz[i]))
+
+        # the returned dz is of size [#fo neurons]
+        for i in range(self.numof_nodes):
+            ???
+            nodes_dz.append(self.neuronsArray[i].backward(dz[i]))
         print nodes_dz
         return nodes_dz

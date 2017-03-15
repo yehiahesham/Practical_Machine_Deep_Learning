@@ -1,9 +1,8 @@
-from PIL import Image
 import numpy as np
 import math
 from neuronV2 import neuron
 from layerV2 import layer
-import data_utils
+# import data_utils
 
 
 def relu(x):
@@ -20,18 +19,23 @@ def sigmod(x):
 def d_sigmod(output):
     return output*(1-output)
 
-    def updateWeight(dloss_dweight,oldweight,learningRate=0.1):
-        return oldweight-(learningRate*dloss_dweight)
+
+def updateWeight(dloss_dweight,oldweight,learningRate=0.1):
+    return oldweight-(learningRate*dloss_dweight)
+
 
 testing_weights2=np.array([0.8,0.2])
 testing_weights3=np.array([0.4,0.9])
 testing_weights4=np.array([0.3,0.5])
 testing_weights5=np.array([0.3,0.5,0.9])
+
 testing_weights_layer1=np.array([[0.8,0.2],[0.4,0.9],[0.3,0.5]])
 testing_weights_layer2=np.array([[0.3,0.5,0.9]])
+testing_biase= 0
+testing_biase1= np.array([0,0,0])
+testing_biase2= np.array([0])
+
 testing_inputs=np.array([1,1])
-
-
 
 # inputs=np.loadtxt('/home/yehia/Desktop/ML/Ass2/xor.txt')
 
@@ -40,10 +44,14 @@ learningRate=0.03
 epochs=1
 
 
-layer1=layer(3,2,3,relu,d_relu,weights=testing_weights_layer1)
-layer2=layer(1,3,1,sigmod,d_sigmod,weights=testing_weights_layer2)
+layer1=layer(3,2,3,relu,d_relu,weights=testing_weights_layer1,biase=testing_biase1)
+layer2=layer(1,3,1,sigmod,d_sigmod,weights=testing_weights_layer2,biase=testing_biase2)
 
-# print sigmod(w)
+# v= sigmod(1.67)
+# print  v
+# v= sigmod(v)
+# print  v
+
 
 
 # testing XOR
