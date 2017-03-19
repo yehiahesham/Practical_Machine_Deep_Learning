@@ -165,7 +165,7 @@ class NeuralNetwork:
 
         return reg_loss
 
-    def predict(self, x_test, y_test):
+    def test(self, x_test, y_test):
         scores = self.calForward(x_test)
         print 'accuracy: %.2f' % (self.get_accuracy(scores, y_test))
 

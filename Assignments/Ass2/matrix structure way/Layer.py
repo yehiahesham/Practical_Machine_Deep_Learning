@@ -15,11 +15,12 @@ class layer(object):
 
 
         #Activation function and its derivative are the same for all nodes in the layer
+        
         self.actFun=actFun
         self.derivative_actFun=d_actFun
 
     def forward(self,inputs):
-        self.inputs=inputs #to be used in backward propogation
+        self.inputs=inputs #to be used in backward propogation  
         self.outputs=self.actFun(np.dot(inputs,self.weights)+self.bias)
         return self.outputs
 
