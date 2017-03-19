@@ -2,25 +2,27 @@ import numpy as np
 
 class neuron(object):
     """docstring for neuron."""
-    def __init__(self,actFun,d_actFun,input_size=None, output_size=None,weights=None,biase=None):
-        #weights intialization
+    # def __init__(self,actFun,d_actFun,input_size=None, output_size=None,weights=None,biase=None):
+    #     #weights intialization
+    #
+    #     if weights is not None:
+    #         self.weights=weights
+    #     else: self.weights=np.random.randn(input_size, output_size) / np.sqrt(input_size)
+    #
+    #     if biase is not None:
+    #         self.biase=biase
+    #     # else: self.biase= np.zeros(output_size)
+    #     else : self.biase=0
 
-        if weights is not None:
-            self.weights=weights
-        else: self.weights=np.random.randn(input_size, output_size) / np.sqrt(input_size)
-
-        if biase is not None:
-            self.biase=biase
-        else: self.biase= np.zeros(output_size)
-
-
-
-        #Activation function and its derivative are the same for all nodes in the layer
+    def __init__(self,actFun,d_actFun):
         self.actFun=actFun
         self.derivative_actFun=d_actFun
 
-    def forward(self,inputs):
+
+    def forward(self,inputs,weights,biase):
         self.inputs=inputs #to be used in backward propogation
+        self.weights=weights
+        self.biase=biase
         self.output=self.actFun(np.sum(inputs* self.weights)+self.biase)
         return self.output
 
