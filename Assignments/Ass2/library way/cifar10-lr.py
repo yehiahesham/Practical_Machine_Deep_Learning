@@ -66,15 +66,15 @@ model = Sequential()
 
 #input layer
 model.add(Flatten(input_shape=X_train.shape[1:]))
-model.add(Dense(1200, activation='relu',W_constraint=maxnorm(3)))
-model.add(Dropout(0.2))
+model.add(Dense(1200, activation='relu',W_constraint=maxnorm(1)))
+#model.add(Dropout(0.2))
 
 #hidden layers
-model.add(Dense(512, activation='relu',W_constraint=maxnorm(3)))
-model.add(Dropout(0.2))
+model.add(Dense(512, activation='relu',W_constraint=maxnorm(1)))
+#model.add(Dropout(0.2))
 
-model.add(Dense(128, activation='relu',W_constraint=maxnorm(3)))
-model.add(Dropout(0.2))
+model.add(Dense(128, activation='relu',W_constraint=maxnorm(1)))
+model.add(Dropout(0.5))
 
 #output layer
 model.add(Dense(nb_classes, activation='softmax'))
@@ -83,13 +83,13 @@ model.summary()
 maxnorm
 # In[8]:
 
-batchSize = 32 #32
-learning_rate=5.586261e-04   #0.0001
+batchSize = 128 #32
+learning_rate=0.0001 #5.586261e-04   #0.0001
 epochs=500 #200
 
 sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
 #model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
-adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0001)
+adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0000001)
 model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
 
