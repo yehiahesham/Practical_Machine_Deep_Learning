@@ -7,9 +7,10 @@ np.random.seed(1337)  # for reproducibility
 
 from keras.datasets import cifar10
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
-from keras.optimizers import SGD
+from keras.layers.core import Dense, Activation,Dropout ,Flatten
+from keras.optimizers import SGD,Adam
 from keras.utils import np_utils
+from keras.preprocessing.image import ImageDataGenerator
 
 
 
@@ -27,14 +28,27 @@ nb_classes = 10
 Y_train = np_utils.to_categorical(y_train, nb_classes)
 Y_test = np_utils.to_categorical(y_test, nb_classes)
 
+
+
+
+
+
+
+
 #Flatten each image into a flat vector
-inputdim = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
-X_train = X_train.reshape(X_train.shape[0], inputdim)
-X_test = X_test.reshape(X_test.shape[0], inputdim)
+# inputdim = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
+
+# X_train = X_train.reshape(X_train.shape[0], inputdim)
+# X_test = X_test.reshape(X_test.shape[0], inputdim)
+
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
-X_train /= 255
-X_test /= 255
+# X_train /= 255
+# X_test /= 255
+# X_test -= np.mean(X_test, axis=0)
+
+
+
 print('X_train shape:', X_train.shape)
 print('y_train shape:', Y_train.shape)
 print('X_test shape:', X_test.shape)
@@ -42,27 +56,76 @@ print('y_test shape:', Y_test.shape)
 print (X_train.shape[1:])
 
 
+
+
 # In[4]:
 
 model = Sequential()
-model.add(Dense(nb_classes, input_shape=X_train.shape[1:]))
-model.add(Activation('softmax'))
 
+#input layer
+model.add(Flatten(input_shape=X_train.shape[1:]))
+model.add(Dense(1024, activation='relu'))
+model.add(Dropout(0.2))
+
+#hidden layers
+model.add(Dense(512, activation='relu'))
+model.add(Dropout(0.2))
+
+#output layer
+model.add(Dense(nb_classes, activation='softmax'))
 model.summary()
 
 
 # In[8]:
 
-sgd = SGD(lr=0.001)
+batchSize = 32 #32
+learning_rate=0.001
+epochs=200
+
+# sgd = SGD(lr=learning_rate)
 #model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
-model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+optimizer=Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-history = model.fit(X_train, Y_train,
-                    batch_size=32, nb_epoch=5,
-                    verbose=1, validation_data=(X_test, Y_test))
 
+
+# history = model.fit(X_train, Y_train,
+#                     batch_size=batchSize, nb_epoch=epochs,
+#                     verbose=1, validation_data=(X_test, Y_test))
+        #   model.fit_generator(datagen.flow(train_features, train_labels, batch_size = 128),
+        #                          samples_per_epoch = train_features.shape[0], nb_epoch = 200,
+        #                          validation_data = (test_features, test_labels), verbose=0)
+
+# history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize),
+#                     samples_per_epoch=len(X_train.shape[0],nb_epoch=epochs,
+#                     validation_data=(X_test, Y_test),verbose=1 )
+
+datagen2 = ImageDataGenerator(
+    featurewise_center=True,
+    samplewise_center=False,
+    featurewise_std_normalization=True,
+    samplewise_std_normalization=False)
+datagen2.fit(X_test)
+
+datagen = ImageDataGenerator(
+    featurewise_center=True,
+    samplewise_center=False,
+    featurewise_std_normalization=True,
+    samplewise_std_normalization=False,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True)
+
+datagen.fit(X_train)
+
+history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize),
+                    steps_per_epoch=X_train.shape[0] / batchSize ,
+                    epochs=epochs,validation_data=datagen2.flow(X_test, Y_test,batch_size=128 ),nb_val_samples=X_test.shape[0],verbose=1 )
 
 # In[6]:
+# datagen2.flow(....,batch_size=128) ,nb_val_samples=X_test.shape[0]
 
 score = model.evaluate(X_test, Y_test, verbose=1)
 print('Test score:', score[0])
