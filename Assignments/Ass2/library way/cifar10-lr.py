@@ -11,6 +11,8 @@ from keras.layers.core import Dense, Activation,Dropout ,Flatten
 from keras.optimizers import SGD,Adam
 from keras.utils import np_utils
 from keras.preprocessing.image import ImageDataGenerator
+from keras import regularizers
+from keras.constraints import maxnorm
 
 
 
@@ -64,28 +66,31 @@ model = Sequential()
 
 #input layer
 model.add(Flatten(input_shape=X_train.shape[1:]))
-model.add(Dense(1024, activation='relu'))
+model.add(Dense(1200, activation='relu',W_constraint=maxnorm(3)))
 model.add(Dropout(0.2))
 
 #hidden layers
-model.add(Dense(512, activation='relu'))
+model.add(Dense(512, activation='relu',W_constraint=maxnorm(3)))
+model.add(Dropout(0.2))
+
+model.add(Dense(128, activation='relu',W_constraint=maxnorm(3)))
 model.add(Dropout(0.2))
 
 #output layer
 model.add(Dense(nb_classes, activation='softmax'))
 model.summary()
 
-
+maxnorm
 # In[8]:
 
 batchSize = 32 #32
-learning_rate=0.001
-epochs=200
+learning_rate=5.586261e-04   #0.0001
+epochs=500 #200
 
-# sgd = SGD(lr=learning_rate)
+sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
 #model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
-optimizer=Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0001)
+model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
 
 
@@ -122,14 +127,14 @@ datagen.fit(X_train)
 
 history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize),
                     steps_per_epoch=X_train.shape[0] / batchSize ,
-                    epochs=epochs,validation_data=datagen2.flow(X_test, Y_test,batch_size=128 ),nb_val_samples=X_test.shape[0],verbose=1 )
+                    epochs=epochs,validation_data=datagen2.flow(X_test, Y_test,batch_size=128 ),nb_val_samples=X_test.shape[0]/128,verbose=1 )
 
 # In[6]:
 # datagen2.flow(....,batch_size=128) ,nb_val_samples=X_test.shape[0]
 
-score = model.evaluate(X_test, Y_test, verbose=1)
-print('Test score:', score[0])
-print('Test accuracy:', score[1])
+# score = model.evaluate(X_test, Y_test, verbose=1)
+# print('Test score:', score[0])
+# print('Test accuracy:', score[1])
 
 
 # In[ ]:
