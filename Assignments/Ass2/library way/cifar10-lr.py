@@ -81,10 +81,11 @@ model.add(Dense(nb_classes, activation='softmax'))
 model.summary()
 
 
+model.load_weights("./weights/weights_1500.hdf5")
 
 batchSize = 128 #32
 learning_rate=0.0001 #5.586261e-04   #0.0001
-epochs=1500 #200
+epochs=0 #200
 
 sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
 #model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
@@ -128,7 +129,6 @@ board = keras.callbacks.TensorBoard(log_dir='./logs/logs_1500V3', histogram_freq
 checkpointer = ModelCheckpoint(filepath="./weights/weights_1500V3.hdf5", verbose=1, save_best_only=True, monitor="val_acc")
 
 
-# model.load_weights("./weights/weights_1500.hdf5")
 
 history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize),
                     steps_per_epoch=X_train.shape[0] / batchSize ,
@@ -136,13 +136,13 @@ history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize
 
 
 
-#mannual avg of testing data
+#manual (preprocessing of data )avg and normalizeation of testing data
 
 channel_axis=0
 col_axis=0
 row_axis=0
 
-data_format = K.image_data_format()()
+data_format = K.image_data_format()
 if data_format == 'channels_first':
     channel_axis = 1
     row_axis = 2
@@ -152,19 +152,65 @@ if data_format == 'channels_last':
     row_axis = 1
     col_axis = 2
 
-mean = np.mean(X_train, axis=(0, row_axis, col_axis))
+mean = np.mean(X_test, axis=(0, row_axis, col_axis))
+std  = np.std(X_test, axis=(0, row_axis, col_axis))
 broadcast_shape = [1, 1, 1]
-broadcast_shape[channel_axis - 1] = x.shape[channel_axis]
+broadcast_shape[channel_axis - 1] = X_test.shape[channel_axis]
 mean = np.reshape(mean, broadcast_shape)
-X_train -= mean
+std  = np.reshape(std, broadcast_shape)
+X_test -= mean
+X_test /= (std + K.epsilon())
 
-print 'X_train.shape is ', X_train.shape
+#
+# print ('----------------------------------_>X_test.shape is ', X_test.shape)
+#
+
+# # datagen2.flow(....,batch_size=128) ,nb_val_samples=X_test.shape[0]
+# score = model.evaluate(X_test, Y_test, verbose=1)
+# print('Test score:', score[0])
+# print('Test accuracy:', score[1])
 
 
-# datagen2.flow(....,batch_size=128) ,nb_val_samples=X_test.shape[0]
-score = model.evaluate(X_test, Y_test, verbose=1)
-print('Test score:', score[0])
-print('Test accuracy:', score[1])
+predicted_classes = model.predict_classes(X_test, batch_size=1, verbose=1)
+# print ('--------------------predicted_classes is ', predicted_classes)
 
+# score = model.evaluate_generator(datagen2.flow(X_test, Y_test, batch_size = 128),steps=1)
+# print('Test loss:', score[0])
+# print('Test accuracy:', score[1])
+#
+# print('Y_test.shape is ', Y_test.shape)
+# print('y_test.shape is ', y_test.shape)
+#
+# m = model.predict_generator(datagen2.flow(X_test, y_test,batch_size=128 ),steps=1) #,steps = 10000
+# answer=np.zeros(m.shape)
 
-# In[ ]:
+# for i in range(m.shape[0]) :
+#     idx=np.argmax(m[i])
+#     answer[i][idx]=1
+#
+# print ('answer is',answer)
+# m = np.argmax(m,axis=1)
+reshaped_y_test=np.reshape(y_test,(10000,))
+#
+# print ('m.shape is ',m[:10]  )
+# print ('m2.shape is ',temp_y_test[:10]  )
+
+# print (m)
+# print ('--------------------------------------------------')
+# print (Y_test)
+
+num_correct = np.sum(predicted_classes == reshaped_y_test)
+
+print (num_correct)
+acc = float(num_correct)/10000.0
+print(acc*100)
+Classes= ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
+X=[]
+for c in range(len(Classes)):
+    X.append(np.sum(predicted_classes[i]==c  and  reshaped_y_test[i]==c for i in range(reshaped_y_test.shape[0])))
+
+correctPerClass = np.array(X)
+
+for c in range(len(Classes)):
+    print ('Got ', correctPerClass[c] , ' on class ',Classes[c], ' which is ', correctPerClass[c]/1000.0)
