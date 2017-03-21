@@ -36,17 +36,8 @@ Y_test = np_utils.to_categorical(y_test, nb_classes)
 
 
 
-
-#Flatten each image into a flat vector, used in testing
-# inputdim = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
-# X_train = X_train.reshape(X_train.shape[0], inputdim)
-# X_test = X_test.reshape(X_test.shape[0], inputdim)
-
 X_train = X_train.astype('float32')
 X_test = X_test.astype('float32')
-# X_train /= 255
-# X_test /= 255
-# X_test -= np.mean(X_test, axis=0)
 
 
 
@@ -58,9 +49,6 @@ print (X_train.shape[1:])
 
 
 
-# model = load_model('./weights_1500.hdf5')
-
-# In[4]:
 
 model = Sequential()
 
@@ -81,29 +69,22 @@ model.add(Dense(nb_classes, activation='softmax'))
 model.summary()
 
 
+
+
+#Loading best weights
 model.load_weights("./weights/weights_1500.hdf5")
+
+
+
 
 batchSize = 128 #32
 learning_rate=0.0001 #5.586261e-04   #0.0001
 epochs=0 #200
 
-sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
-#model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['accuracy'])
+# sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
 adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0000001)
 model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-
-
-# history = model.fit(X_train, Y_train,
-#                     batch_size=batchSize, nb_epoch=epochs,
-#                     verbose=1, validation_data=(X_test, Y_test))
-        #   model.fit_generator(datagen.flow(train_features, train_labels, batch_size = 128),
-        #                          samples_per_epoch = train_features.shape[0], nb_epoch = 200,
-        #                          validation_data = (test_features, test_labels), verbose=0)
-
-# history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize),
-#                     samples_per_epoch=len(X_train.shape[0],nb_epoch=epochs,
-#                     validation_data=(X_test, Y_test),verbose=1 )
 
 datagen2 = ImageDataGenerator(
     featurewise_center=True,
@@ -161,44 +142,10 @@ std  = np.reshape(std, broadcast_shape)
 X_test -= mean
 X_test /= (std + K.epsilon())
 
-#
-# print ('----------------------------------_>X_test.shape is ', X_test.shape)
-#
-
-# # datagen2.flow(....,batch_size=128) ,nb_val_samples=X_test.shape[0]
-# score = model.evaluate(X_test, Y_test, verbose=1)
-# print('Test score:', score[0])
-# print('Test accuracy:', score[1])
 
 
 predicted_classes = model.predict_classes(X_test, batch_size=1, verbose=1)
-# print ('--------------------predicted_classes is ', predicted_classes)
-
-# score = model.evaluate_generator(datagen2.flow(X_test, Y_test, batch_size = 128),steps=1)
-# print('Test loss:', score[0])
-# print('Test accuracy:', score[1])
-#
-# print('Y_test.shape is ', Y_test.shape)
-# print('y_test.shape is ', y_test.shape)
-#
-# m = model.predict_generator(datagen2.flow(X_test, y_test,batch_size=128 ),steps=1) #,steps = 10000
-# answer=np.zeros(m.shape)
-
-# for i in range(m.shape[0]) :
-#     idx=np.argmax(m[i])
-#     answer[i][idx]=1
-#
-# print ('answer is',answer)
-# m = np.argmax(m,axis=1)
 reshaped_y_test=np.reshape(y_test,(10000,))
-#
-# print ('m.shape is ',m[:10]  )
-# print ('m2.shape is ',temp_y_test[:10]  )
-
-# print (m)
-# print ('--------------------------------------------------')
-# print (Y_test)
-
 num_correct = np.sum(predicted_classes == reshaped_y_test)
 
 print (num_correct)
