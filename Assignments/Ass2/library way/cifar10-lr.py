@@ -1,5 +1,3 @@
-
-
 # adapted from https://github.com/fchollet/keras/blob/master/examples/mnist_mlp.py
 from __future__ import print_function
 import numpy as np
@@ -16,7 +14,7 @@ from keras.constraints import maxnorm
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint,TensorBoard
 import keras
-
+from keras import backend as K
 
 # The data, shuffled and split between train and test sets:
 (X_train, y_train), (X_test, y_test) = cifar10.load_data()
@@ -126,17 +124,43 @@ datagen = ImageDataGenerator(
 
 datagen.fit(X_train)
 
-board = keras.callbacks.TensorBoard(log_dir='./logs/logs_1500V2', histogram_freq=0, write_graph=True, write_images=False)
-checkpointer = ModelCheckpoint(filepath="./weights/weights_1500.hdf5", verbose=1, save_best_only=True)
+board = keras.callbacks.TensorBoard(log_dir='./logs/logs_1500V3', histogram_freq=0, write_graph=True, write_images=False)
+checkpointer = ModelCheckpoint(filepath="./weights/weights_1500V3.hdf5", verbose=1, save_best_only=True, monitor="val_acc")
 
 
-
+# model.load_weights("./weights/weights_1500.hdf5")
 
 history = model.fit_generator(datagen.flow(X_train, Y_train,batch_size=batchSize),
                     steps_per_epoch=X_train.shape[0] / batchSize ,
                     epochs=epochs,validation_data=datagen2.flow(X_test, Y_test,batch_size=128 ),nb_val_samples=X_test.shape[0],verbose=1, callbacks=[board,checkpointer] )
 
-# In[6]:
+
+
+#mannual avg of testing data
+
+channel_axis=0
+col_axis=0
+row_axis=0
+
+data_format = K.image_data_format()()
+if data_format == 'channels_first':
+    channel_axis = 1
+    row_axis = 2
+    col_axis = 3
+if data_format == 'channels_last':
+    channel_axis = 3
+    row_axis = 1
+    col_axis = 2
+
+mean = np.mean(X_train, axis=(0, row_axis, col_axis))
+broadcast_shape = [1, 1, 1]
+broadcast_shape[channel_axis - 1] = x.shape[channel_axis]
+mean = np.reshape(mean, broadcast_shape)
+X_train -= mean
+
+print 'X_train.shape is ', X_train.shape
+
+
 # datagen2.flow(....,batch_size=128) ,nb_val_samples=X_test.shape[0]
 score = model.evaluate(X_test, Y_test, verbose=1)
 print('Test score:', score[0])
