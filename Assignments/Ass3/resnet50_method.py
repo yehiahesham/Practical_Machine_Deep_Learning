@@ -39,14 +39,14 @@ test_datagen = ImageDataGenerator()
 
 
 train_generator = train_datagen.flow_from_directory(
-        './Data/train/',
+        '/home/yehiahesham/Desktop/vi/ML/Ass3_data/train/',
         target_size=(299, 299), #299
         batch_size=128,
         class_mode='categorical',shuffle = True)
 
 
 validation_generator = validate_datagen.flow_from_directory(
-        './Data/validate/',
+        '/home/yehiahesham/Desktop/vi/ML/Ass3_data/validate/',
         target_size=(299, 299), #299
         batch_size=128,
         class_mode='categorical', shuffle = True)
@@ -120,7 +120,7 @@ model.fit_generator(
 
 """
 test_generator = test_datagen.flow_from_directory(
-        '/home/mh3081995/Desktop/hassan/test/',
+        './test/',
         target_size=(224, 224),
         batch_size=32,
         class_mode='binary', shuffle = False)
