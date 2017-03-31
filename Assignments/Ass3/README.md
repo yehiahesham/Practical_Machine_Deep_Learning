@@ -13,7 +13,7 @@ We thank Fei-Fei Li, Andrej Karpathy, and Justin Johnson for providing this data
 
    # File descriptions #
 
- * train.images.zip - the training set (images distributed into class labeled folders)
+ * train.images.zip - the training set (images distributed into class labeled folders). You can download it from here : https://drive.google.com/file/d/0BxFQTZeqqLRccUNWdE9lOG9JWWs/view?usp=sharing 
  * test.zip - the unlabeled 10,000 test images
  * sample.txt - a sample submission file in the correct format (but needs to have 10,001 lines. One line per image in addition to the first header line)
  * wnids.txt - list of the used ids from the original full set of ImageNet
