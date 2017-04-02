@@ -1,7 +1,6 @@
-for d in */ ; do
-    mkdir /home/yehiahesham/Desktop/vi/ML/Practical_Machine_Deep_Learning/Assignments/Ass3/Data/validate/$d
-    for (( i=0; i <= 49; i++ ))   
+for d in /home/yehiahesham/Desktop/vi/ML/Ass3_data/train/* ; do
+    for (( i=0; i <= 49; i++ ))
     do
-        mv $d/*_$i.JPEG /home/yehiahesham/Desktop/vi/ML/Practical_Machine_Deep_Learning/Assignments/Ass3/Data/validate/$d
+        mv $d/*_$i.JPEG /home/yehiahesham/Desktop/vi/ML/Ass3_data/validate/
     done
 done
