@@ -203,7 +203,7 @@ layer {
       type: "constant"
       value: 0.1
     }
- 
+
   }
 }
 layer {
