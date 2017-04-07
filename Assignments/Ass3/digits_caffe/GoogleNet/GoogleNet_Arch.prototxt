@@ -14,6 +14,7 @@ layer {
   }
   include { stage: "train" }
 }
+
 layer {
   name: "data"
   type: "Data"
