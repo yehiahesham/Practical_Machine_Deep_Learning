@@ -18,7 +18,7 @@ import numpy as np
 img_size = 224
 batchSize = 64 #32
 learning_rate=0.01
-epochs=0   #0 #20
+epochs=20   #0 #20
 
 
 
@@ -80,7 +80,7 @@ train_gen_testData = datagen_test.flow_from_directory('/home/yehiahesham/Desktop
    batch_size=batchSize,
    class_mode='categorical')
 
-
+# uncommit this to train
 # history = new_model.fit_generator(train_gen_trainData, steps_per_epoch= 90000 / batchSize ,
 #                             epochs=epochs,validation_data=train_gen_testData,validation_steps =10000 / batchSize ,verbose=1, callbacks=[board,checkpointer] )
 
