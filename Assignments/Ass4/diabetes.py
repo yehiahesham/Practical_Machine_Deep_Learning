@@ -46,6 +46,13 @@ eigenvalues, eigenvectors = np.linalg.eig(cov);
 print 'eigenvalues.shape is',eigenvalues.shape
 print 'eigenvectors.shape is ',eigenvectors.shape # they are normalized already, IE each is a unit vector
 
+print Y_train.shape
+
+# One Hot Encoding
+Y_train = keras.utils.to_categorical(Y_train, 2)
+
+print '------------------------'
+print  Y_train.shape
 
 # sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 batchSize = 32 #32
@@ -65,20 +72,23 @@ for dims in dims_kept:
     newEigensIndices = np.argsort(-eigenvalues)[:dims]
     new_X_train = np.dot(X_train.as_matrix(),eigenvectors[newEigensIndices].T);
     print '\tnew_X_train.shape is ',new_X_train.shape
+    print '\tY_train.shape is ',Y_train.shape
+
+    print 'new_X_train.shape[1:] is ',new_X_train.shape[1:]
     # Define the classifier based on the # of Dimensions
     model = Sequential()
-    model.add(Dense(128, input_shape=(dims,)))
+    model.add(Dense(8, input_shape=(new_X_train.shape[1:])))
     #model.add(Dropout(0.2))
 
     #hidden layers
     # model.add(Dense(64, activation='relu')) #,W_constraint=maxnorm(1)
     model.add(Dropout(0.2))
 
-    model.add(Dense(32, activation='relu')) #,W_constraint=maxnorm(1)
+    model.add(Dense(7, activation='relu')) #,W_constraint=maxnorm(1)
     # model.add(Dropout(0.5))
 
     #output layer
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(2, activation='sigmoid'))
     model.summary()
 
     # Train the classifier on the training data and labels
@@ -90,6 +100,7 @@ for dims in dims_kept:
     for idxes in idx_folds:
         X_train_folds.append( new_X_train[idxes] )
         y_train_folds.append( Y_train[idxes] )
+
 
     dims_to_accuracies[dims] = list()
     for num in xrange(num_folds):
