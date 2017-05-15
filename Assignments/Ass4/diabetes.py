@@ -1,3 +1,6 @@
+from sklearn.decomposition import PCA
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
 from keras.preprocessing import image
 from keras.models import Model
 from keras.optimizers import SGD, Adam, Nadam, RMSprop
@@ -17,6 +20,10 @@ import os
 import pandas as pd
 import numpy as np
 
+seed = 2558
+np.random.seed(seed)
+
+
 def loadData(path):     #loads data , caluclate Mean & subtract it data, gets the COV. Matrix.
     D = pd.read_csv(path)
     feature_names  = np.array(list(D.columns.values))
@@ -32,13 +39,6 @@ def loadData(path):     #loads data , caluclate Mean & subtract it data, gets th
     print 'Feature are ',feature_names
     return  X_train, Y_train, mean, cov, feature_names
 
-def getAccuracy(trueLabels, predictions):
-    correct = 0
-    correct= np.sum(predictions == trueLabels)
-    return (correct/float(len(trueLabels))) * 100.0
-
-
-
 X_train, Y_train, mean, cov, feature_names = loadData('./data/pima-indians-diabetes.csv')
 
 eigenvalues, eigenvectors = np.linalg.eig(cov);
@@ -48,165 +48,141 @@ print 'eigenvectors.shape is ',eigenvectors.shape # they are normalized already,
 
 print Y_train.shape
 
+
+
+
 # One Hot Encoding
 Y_train = keras.utils.to_categorical(Y_train, 2)
 
-print '------------------------'
-print  Y_train.shape
 
 # sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
-batchSize = 32 #32
+batchSize = 128 #32
 learning_rate=0.0001 #5.586261e-04   #0.0001
-epochs=5 #200
+epochs=50 #200
 num_folds = 5
-dims_kept= [1,2,3,4,5,6,7,8]
-dims_to_accuracies = {}
-X_train_folds = []
-y_train_folds = []
+dims_kept= [1,2,3,4,5,6,7]
+kf = KFold(n_splits=num_folds)
+# newEigensIndices = np.argsort(-eigenvalues)[:dims]
+sortedEigensIndices = np.argsort(-eigenvalues)
 
-idxes = range(X_train.shape[0])
-idx_folds = np.array_split(idxes, num_folds)
+var_exp = [(i / np.sum(eigenvalues)) * 100 for i in eigenvalues]
+cum_var_exp = np.cumsum(var_exp)
+# print 'importance of each eigenvalue'
+# print var_exp
+# print 'importance of sum of eigenvalues'
+# print cum_var_exp
 
-for dims in dims_kept:
-    print '\t# Dimensions to Keep is ',dims
-    newEigensIndices = np.argsort(-eigenvalues)[:dims]
-    new_X_train = np.dot(X_train.as_matrix(),eigenvectors[newEigensIndices].T);
-    print '\tnew_X_train.shape is ',new_X_train.shape
-    print '\tY_train.shape is ',Y_train.shape
 
-    print 'new_X_train.shape[1:] is ',new_X_train.shape[1:]
-    # Define the classifier based on the # of Dimensions
+
+accuracies_folds_withoutPCA=[]
+
+#withoutPCA
+for train, test in kf.split(X_train.as_matrix()):
+    kX_train2, kX_test2, kY_train2, kY_test2 = X_train.as_matrix()[train], X_train.as_matrix()[test], Y_train[train], Y_train[test]
     model = Sequential()
-    model.add(Dense(8, input_shape=(new_X_train.shape[1:])))
+    model.add(Dense(8, input_shape=(kX_train2.shape[1:])))
     #model.add(Dropout(0.2))
 
     #hidden layers
     # model.add(Dense(64, activation='relu')) #,W_constraint=maxnorm(1)
-    model.add(Dropout(0.2))
-
+    # model.add(Dropout(0.2))
     model.add(Dense(7, activation='relu')) #,W_constraint=maxnorm(1)
     # model.add(Dropout(0.5))
 
     #output layer
-    model.add(Dense(2, activation='sigmoid'))
-    model.summary()
+    model.add(Dense(2, activation='softmax'))
+    # model.summary()
 
-    # Train the classifier on the training data and labels
+    # Compile model
     sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
     # adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0000001)
     model.compile(loss='binary_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
+    # Train the classifier on the training data and labels
+    # history = model.fit(kX_train, kY_train, epochs=epochs, batch_size=batchSize, validation_split=0.2)
+    history = model.fit(kX_train2, kY_train2,
+                batch_size=batchSize,
+                epochs=epochs,
+                verbose=1,
+                validation_data=(kX_test2, kY_test2))
+    accuracies_folds_withoutPCA.append(np.amax(history.history['val_acc']));
 
-    for idxes in idx_folds:
-        X_train_folds.append( new_X_train[idxes] )
-        y_train_folds.append( Y_train[idxes] )
-
-
-    dims_to_accuracies[dims] = list()
-    for num in xrange(num_folds):
-        print '\tProcessing fold', num, ' / ', num_folds
-
-        X_cv_train = np.vstack( [ X_train_folds[x] for x in xrange(num_folds) if x != num ])
-        y_cv_train = np.hstack( [ y_train_folds[x].T for x in xrange(num_folds) if x != num ])
-
-        X_cv_test = X_train_folds[num]
-        y_cv_test = y_train_folds[num]
+withoutPCA = np.mean(accuracies_folds_withoutPCA);
+withoutPCA_std = np.std(accuracies_folds_withoutPCA);
 
 
-        model.fit(X_cv_train, y_cv_train,
-                  batch_size=batchSize,
-                  epochs=epochs,
-                  verbose=1,
-                  validation_data=(X_cv_test, y_cv_test))
-
-        # Predict labels on the test data
-        Y_predicated_test = model.evaluate(X_cv_test, y_cv_test, verbose=0)
-
-        print 'Y_predicated_test is '
-        print Y_predicated_test
-        # print 'Y_predicated_test.shape is ',Y_predicated_test.shape
-        # print Y_predicated_test
-
-        # Compute and print the fraction of correctly predicted examples
-        # dims_to_accuracies[dims].append(getAccuracy(y_cv_test,Y_predicated_test))
-        # print ('Accurcy is ', dims_to_accuracies[k])
 
 
-# for dims in dims_kept:
-#     print '# Dimensions to Keep is ',dims
+accuracies=[]
+accuracies_std=[]
+accuracies_folds=[]
 
-    # dims_to_accuracies[dims] = list()
-    # for num in xrange(num_folds):
-    #     print 'Processing fold', num, ' / ', num_folds
-    #
-    #     X_cv_train = np.vstack( [ X_train_folds[x] for x in xrange(num_folds) if x != num ])
-    #     y_cv_train = np.hstack( [ y_train_folds[x].T for x in xrange(num_folds) if x != num ])
-    #
-    #     X_cv_test = X_train_folds[num]
-    #     y_cv_test = y_train_folds[num]
-    #
-    #
-    #     # Define the classifier based on the # of Dimensions
-    #     model = Sequential()
-    #     model.add(Dense(128, input_shape=(dims,)))
-    #     #model.add(Dropout(0.2))
-    #
-    #     #hidden layers
-    #     # model.add(Dense(64, activation='relu')) #,W_constraint=maxnorm(1)
-    #     model.add(Dropout(0.2))
-    #
-    #     model.add(Dense(32, activation='relu')) #,W_constraint=maxnorm(1)
-    #     # model.add(Dropout(0.5))
-    #
-    #     #output layer
-    #     model.add(Dense(2, activation='softmax'))
-    #     model.summary()
-    #
-    #     # Train the classifier on the training data and labels
-    #
-    #     # sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
-    #     batchSize = 32 #32
-    #     learning_rate=0.0001 #5.586261e-04   #0.0001
-    #     epochs=5 #200
-    #
-    #     sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
-    #     # adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0000001)
-    #     model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
-    #
-    #     model.fit(X_cv_train, y_cv_train,
-    #               batch_size=batchSize,
-    #               epochs=epochs,
-    #               verbose=1,
-    #               validation_data=(X_cv_test, y_cv_test))
-    #
-    #     # Predict labels on the test data
-    #     Y_predicated_test = model.evaluate(X_cv_test, y_cv_test, verbose=0)
-    #
-    #     print 'Y_predicated_test[0] is '
-    #     print Y_predicated_test[0]
-    #     print 'Y_predicated_test.shape is ',Y_predicated_test.shape
-    #     print Y_predicated_test
-    #
-    #     # Compute and print the fraction of correctly predicted examples
-    #     dims_to_accuracies[dims].append(getAccuracy(y_cv_test,Y_predicated_test))
-    #     print ('Accurcy is ', dims_to_accuracies[k])
+# with PCA
+for dims in dims_kept:
+    print '\t# Dimensions to Keep is ',dims
+    newEigensIndices = sortedEigensIndices[:dims]
+    Proj_X_train = np.dot(X_train.as_matrix(),eigenvectors[newEigensIndices].T);
+    print '\tProj_X_train.shape is ',Proj_X_train.shape
 
-#calculating for each K the mean and Std of the Accurcies
-accuracies_mean = np.array([np.mean(v) for k,v in sorted(dims_to_accuracies.items())])
-accuracies_std = np.array([np.std(v) for k,v in sorted(dims_to_accuracies.items())])
+    for train, test in kf.split(X_train.as_matrix()):
+        kX_train, kX_test, kY_train, kY_test = X_train.as_matrix()[train], X_train.as_matrix()[test], Y_train[train], Y_train[test]
 
-#printing for each K the mean and Std of the Accurcies
-for dims, Accurcies in dims_to_accuracies.iteritems():
-    print 'dims = ', dims,' got an Accurcy mean of ',np.mean(Accurcies), 'and Std of ', np.std(Accurcies), '\n'
+        # Define the classifier based on the # of Dimensions
+        model = Sequential()
+        model.add(Dense(8, input_shape=(kX_train.shape[1:])))
+        #model.add(Dropout(0.2))
 
-#choosing Highest Accurcy mean with the least Std, respecting the difference threshold of best 2 means
-c= np.column_stack((accuracies_mean,accuracies_std))
-best = np.argmax(c,axis=0)[0]
-threshold=0.0 #1.3
-best_close = [i for i, j in enumerate(accuracies_mean) if j + threshold >= c[best][0]] #retreive close means the best mean found
-for i in (best_close):
-        if(c[i][1]<=c[best][1]):
-            best=i
+        #hidden layers
+        # model.add(Dense(64, activation='relu')) #,W_constraint=maxnorm(1)
+        # model.add(Dropout(0.2))
+        model.add(Dense(7, activation='relu')) #,W_constraint=maxnorm(1)
+        # model.add(Dropout(0.5))
 
-#printing best K and its Accurcy mean and Std
-print ('best when dims= ', dims_kept[best], ' Acc= ', c[best][0] , ' std= ', c[best][1], '\n')
+        #output layer
+        model.add(Dense(2, activation='softmax'))
+        # model.summary()
+
+    	# Compile model
+        sgd = SGD(lr=learning_rate, momentum=0.7,nesterov=True)
+        # adam=Adam(lr=learning_rate, beta_1=0.7, beta_2=0.999, epsilon=1e-08, decay=0.0000001)
+        model.compile(loss='binary_crossentropy', optimizer=sgd, metrics=['accuracy'])
+
+        # Train the classifier on the training data and labels
+        # history = model.fit(kX_train, kY_train, epochs=epochs, batch_size=batchSize, validation_split=0.2)
+        history = model.fit(kX_train, kY_train,
+                    batch_size=batchSize,
+                    epochs=epochs,
+                    verbose=1,
+                    validation_data=(kX_test, kY_test))
+        accuracies_folds.append(np.amax(history.history['val_acc']));
+
+    accuracies.append(np.mean(accuracies_folds));
+    accuracies_std.append(np.std(accuracies_folds));
+
+print len(accuracies_std)
+# print '\t without PCA, using the full 8 Dimensions,  we got accuracy of  ',withoutPCA
+
+print 'accuracy of 5 folds without PCA ',withoutPCA, 'and std of ',withoutPCA_std
+
+print 'importance of each eigenvalue'
+print var_exp
+
+print 'importance of sum of eigenvalues'
+print cum_var_exp
+
+print 'accuracy per folds withoutPCA are'
+print  accuracies_folds_withoutPCA
+
+print 'accuracies per folds with PCA are'
+for i in range(len(accuracies_folds)/5):
+    print 'For #of Dimensions kept = ',1+i,' the accuracy per folds with PCA are'
+    print  accuracies_folds[(i*5):((i*5)+5)]
+
+
+accuracies.append(withoutPCA)
+accuracies_std.append(withoutPCA_std)
+
+print 'Choosing the best #of Dimensions to keep'
+for i in range(len(accuracies)):
+	print '\t Using only ',i+1, ' we got accuracy of  ',accuracies[i], 'with std of ', accuracies_std[i]
+print 'the best #of Dimensions to keep is ', 1+np.argmax(accuracies)
