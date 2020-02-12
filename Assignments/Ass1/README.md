@@ -53,12 +53,12 @@ Got  428  on class  truck  which is  0.428
 
 Now to test our LSS classifier against the testing set, I am going to have training set size of 50,000 Gray Scale images to report the accuracy of my classifier . The simulation gave:
 
-### Average Correct Classification Rate (ACCR) :### 
+### Average Correct Classification Rate (ACCR) : ### 
 
 #correct = 2672 out of 10000
 Accuracy is : 26.72
 
-### Correct Classification Rate of each of the 10 classes separately  (CCRn):### 
+### Correct Classification Rate of each of the 10 classes separately  (CCRn): ### 
 
 Got  293  on class  airplane  which is  0.293
 Got  358  on class  automobile  which is  0.358
@@ -75,7 +75,7 @@ Got  457  on class  truck  which is  0.457
 I compared the ACCR  & CCRn from both colored and gray scale in LLS with 50,000. We can see that the colored images with produce better ACCR  & CCRn  than using Gray scaled images . So, Colored images are better, Yet it is faster at calculation.
 
 
-### Report CCRn for k-NN versus LLS classifiers.### 
+### Report CCRn for k-NN versus LLS classifiers ### 
 
 
 	                airplane automobile	bird	cat	  deer	dog	  frog	horse	ship	truck
