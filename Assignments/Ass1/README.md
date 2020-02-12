@@ -23,7 +23,7 @@ Implement a linear least square classifier (LLS) that can best recognize the
 =======
 ### Calculating W for the LLS classified ###
 
-	For each classifier we are going to give it the 50,000; however, for each classifier we are going to label which index from the 50,000 are its specifically, which is actual the true label vector. The true label vector will be 1s for the desired class and 0s for everything else. Now,  for each classier , its weights are calculated as the following matrix formula:
+For each classifier we are going to give it the 50,000; however, for each classifier we are going to label which index from the 50,000 are its specifically, which is actual the true label vector. The true label vector will be 1s for the desired class and 0s for everything else. Now,  for each classier , its weights are calculated as the following matrix formula:
 
                           Weigths = W = inverse of(X.T dot X) dot X.T dot Truelables
                           
